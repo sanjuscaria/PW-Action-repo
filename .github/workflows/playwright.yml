@@ -1,0 +1,39 @@
+name: Playwright Regression Suite
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch: # Allows you to trigger the test manually from GitHub UI
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js Environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18 # Lock down the Node version for deterministic builds
+        cache: 'npm'     # Speeds up runs by caching node_modules
+
+    - name: Install Project Dependencies
+      run: npm ci
+
+    - name: Install Playwright Cloud Browsers
+      run: npx playwright install --with-deps
+
+    - name: Execute Playwright Tests
+      run: npx playwright test
+
+    - name: Secure and Upload Test Reports
+      uses: actions/upload-artifact@v4
+      if: always() # Ensures reports upload even if some test cases fail
+      with:
+        name: playwright-execution-report
+        path: playwright-report/
+        retention-days: 30
